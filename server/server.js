@@ -28,6 +28,10 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 // === API Routes ===
 app.use('/api/users', userRoutes);
 app.use('/api/reports', reportRoutes); // <-- Use the new report router
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
+
 
 // Connect to MongoDB & start server
 const PORT = process.env.PORT || 5000;
