@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define your server URL
-const SERVER_BASE = Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000';
+const SERVER_BASE = 'https://civic-issue-complaint-app.onrender.com/'
 
 const HomePage = ({ navigation }) => {
   // State to hold the report counts, initialized to 0

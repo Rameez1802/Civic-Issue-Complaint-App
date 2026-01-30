@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // IMPORTANT: Replace with your computer's IP address
-const API_URL = 'http://10.0.2.2:5000/api/users'; // Example IP
+const API_URL = 'https://civic-issue-complaint-app.onrender.com/api/users'; // Example IP
+
 
 const Login = ({ navigation }) => {
     const [email, setEmail] = useState('');

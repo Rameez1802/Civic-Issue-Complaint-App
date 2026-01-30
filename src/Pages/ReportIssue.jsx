@@ -6,7 +6,7 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker'
 import { useNavigation } from '@react-navigation/native'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SERVER_BASE = Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000' // adjust if needed
+const SERVER_BASE = 'https://civic-issue-complaint-app.onrender.com/' // adjust if needed
 
 const ReportIssue = () => {
   const navigation = useNavigation()

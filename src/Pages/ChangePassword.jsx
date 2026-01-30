@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // IMPORTANT: Use your computer's IP address
-const API_URL = 'http://10.0.2.2:5000/api/users'; // Example IP
+
+const API_URL = 'https://civic-issue-complaint-app.onrender.com/api/users'; // Example IP
 
 const ForgotPassword = ({ navigation }) => {
     const [email, setEmail] = useState('');
