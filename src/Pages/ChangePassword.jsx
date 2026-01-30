@@ -1,163 +1,148 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { API } from '../config/api'; // ✅ CENTRAL API IMPORT
+
+// IMPORTANT: Use your computer's IP address
+
+const API_URL = 'https://civic-issue-complaint-app.onrender.com/api/users'; // Example IP
 
 const ForgotPassword = ({ navigation }) => {
-  const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+    const [email, setEmail] = useState('');
+    const [otp, setOtp] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    
+    const [isOtpSent, setIsOtpSent] = useState(false); // Controls which part of the form is shown
+    const [isLoading, setIsLoading] = useState(false); // Shows a loading indicator
 
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+    // --- Function to handle sending the OTP ---
+    const handleSendOtp = async () => {
+        if (!email) {
+            Alert.alert('Error', 'Please enter your email address.');
+            return;
+        }
+        setIsLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            const data = await response.json();
 
-  // ================= SEND OTP =================
-  const handleSendOtp = async () => {
-    if (!email) {
-      Alert.alert('Error', 'Please enter your email address.');
-      return;
-    }
+            if (response.ok) {
+                Alert.alert('Success', 'An OTP has been sent to your email.');
+                setIsOtpSent(true); // Show the OTP input field
+            } else {
+                Alert.alert('Error', data.message || 'Failed to send OTP.');
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Could not connect to the server.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-    setIsLoading(true);
-    try {
-      const response = await fetch(API.FORGOT_PASSWORD, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
+    // --- Function to handle resetting the password ---
+    const handleResetPassword = async () => {
+        if (!otp || !newPassword) {
+            Alert.alert('Error', 'Please enter the OTP and your new password.');
+            return;
+        }
+        setIsLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp, newPassword }),
+            });
+            const data = await response.json();
 
-      const data = await response.json();
+            if (response.ok) {
+                Alert.alert('Success', 'Your password has been changed successfully.');
+                navigation.navigate('Profile');
+            } else {
+                Alert.alert('Error', data.message || 'Failed to reset password.');
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Could not connect to the server.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-      if (response.ok) {
-        Alert.alert('Success', 'OTP sent to your email');
-        setIsOtpSent(true);
-      } else {
-        Alert.alert('Error', data.message || 'Failed to send OTP');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Server not reachable');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return (
+        <SafeAreaView style={styles.body}>
+            <Text style={styles.heading}>Change Password</Text>
+            <Text style={styles.subHeading}>
+                {isOtpSent 
+                    ? 'An OTP has been sent. Please check your email.' 
+                    : 'Enter your email to receive an OTP.'}
+            </Text>
 
-  // ================= RESET PASSWORD =================
-  const handleResetPassword = async () => {
-    if (!otp || !newPassword) {
-      Alert.alert('Error', 'Please enter OTP and new password');
-      return;
-    }
+            {/* Email Input */}
+            <View style={styles.container}>
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                    placeholder='Enter registered email'
+                    style={[styles.inputBox, isOtpSent && styles.disabledInput]}
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType='email-address'
+                    autoCapitalize='none'
+                    editable={!isOtpSent} // Disable editing after OTP is sent
+                />
+            </View>
 
-    setIsLoading(true);
-    try {
-      const response = await fetch(API.RESET_PASSWORD, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          otp,
-          newPassword,
-        }),
-      });
+            {/* Conditionally render OTP and Password fields */}
+            {isOtpSent && (
+                <>
+                    <View style={styles.container}>
+                        <Text style={styles.label}>OTP</Text>
+                        <TextInput
+                            placeholder='Enter 6-digit OTP'
+                            style={styles.inputBox}
+                            value={otp}
+                            onChangeText={setOtp}
+                            keyboardType='number-pad'
+                            maxLength={6}
+                        />
+                    </View>
+                    <View style={styles.container}>
+                        <Text style={styles.label}>New Password</Text>
+                        <TextInput
+                            placeholder='Enter new password'
+                            style={styles.inputBox}
+                            value={newPassword}
+                            onChangeText={setNewPassword}
+                            secureTextEntry
+                        />
+                    </View>
+                </>
+            )}
 
-      const data = await response.json();
+            {/* Conditionally render the correct button */}
+            <TouchableOpacity 
+                style={styles.actionBtn} 
+                onPress={isOtpSent ? handleResetPassword : handleSendOtp}
+                disabled={isLoading}
+            >
+                {isLoading ? (
+                    <ActivityIndicator color="white" />
+                ) : (
+                    <Text style={styles.btnText}>
+                        {isOtpSent ? 'Reset Password' : 'Send OTP'}
+                    </Text>
+                )}
+            </TouchableOpacity>
 
-      if (response.ok) {
-        Alert.alert('Success', 'Password changed successfully');
-        navigation.navigate('Profile');
-      } else {
-        Alert.alert('Error', data.message || 'Failed to reset password');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Server not reachable');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <SafeAreaView style={styles.body}>
-      <Text style={styles.heading}>Change Password</Text>
-      <Text style={styles.subHeading}>
-        {isOtpSent
-          ? 'Enter the OTP sent to your email'
-          : 'Enter your email to receive OTP'}
-      </Text>
-
-      {/* EMAIL */}
-      <View style={styles.container}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          placeholder="Enter registered email"
-          style={[styles.inputBox, isOtpSent && styles.disabledInput]}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          editable={!isOtpSent}
-        />
-      </View>
-
-      {/* OTP + PASSWORD */}
-      {isOtpSent && (
-        <>
-          <View style={styles.container}>
-            <Text style={styles.label}>OTP</Text>
-            <TextInput
-              placeholder="Enter OTP"
-              style={styles.inputBox}
-              value={otp}
-              onChangeText={setOtp}
-              keyboardType="number-pad"
-              maxLength={6}
-            />
-          </View>
-
-          <View style={styles.container}>
-            <Text style={styles.label}>New Password</Text>
-            <TextInput
-              placeholder="Enter new password"
-              style={styles.inputBox}
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry
-            />
-          </View>
-        </>
-      )}
-
-      {/* BUTTON */}
-      <TouchableOpacity
-        style={styles.actionBtn}
-        onPress={isOtpSent ? handleResetPassword : handleSendOtp}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.btnText}>
-            {isOtpSent ? 'Reset Password' : 'Send OTP'}
-          </Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Text style={styles.backTxt}>Back to Profile</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
-  );
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Text style={styles.backTxt}>Back to Profile</Text>
+            </TouchableOpacity>
+        </SafeAreaView>
+    );
 };
 
 export default ForgotPassword;
-
 
 const styles = StyleSheet.create({
     body: {

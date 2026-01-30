@@ -1,104 +1,97 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity, Alert } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API } from '../config/api'; // ✅ IMPORT CENTRAL API
+
+// IMPORTANT: Replace with your computer's IP address
+const API_URL = 'https://civic-issue-complaint-app.onrender.com/api/users'; // Example IP
+
 
 const Login = ({ navigation }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password.');
-      return;
-    }
+    const handleLogin = async () => {
+        if (!email || !password) {
+            Alert.alert('Error', 'Please enter email and password.');
+            return;
+        }
 
-    try {
-      const response = await fetch(API.LOGIN, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+        try {
+            const response = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
 
-      const data = await response.json();
+            const data = await response.json();
 
-      if (response.ok) {
-        // ✅ Store token / user info
-        await AsyncStorage.setItem('userInfo', JSON.stringify(data));
-        console.log('Login successful');
+            if (response.ok) {
+                
+                // Store the user info as a string in AsyncStorage
+                await AsyncStorage.setItem('userInfo', JSON.stringify(data));
+                console.log('Login successful, token:', data.token);
+                
+                navigation.replace('Main');
+            } else {
+                Alert.alert('Login Failed', data.message || 'Invalid credentials');
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Could not connect to the server.');
+        }
+    };
 
-        navigation.replace('Main');
-      } else {
-        Alert.alert('Login Failed', data.message || 'Invalid credentials');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Server not reachable');
-    }
-  };
+    return (
+        <SafeAreaView style={styles.body}>
+            <Text style={styles.heading}>Welcome Back,</Text>
+            <Image source={require('../images/appLogo.png')} style={styles.appLogo}></Image>
+            <Text style={styles.appName}>Seva Setu</Text>
 
-  return (
-    <SafeAreaView style={styles.body}>
-      <Text style={styles.heading}>Welcome Back,</Text>
+            <View style={styles.container}>
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                    placeholder='Enter email'
+                    style={styles.inputBox}
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType='email-address'
+                    autoCapitalize='none'
+                />
+            </View>
 
-      <Image
-        source={require('../images/appLogo.png')}
-        style={styles.appLogo}
-      />
+            <View style={styles.container}>
+                <Text style={styles.label}>Password</Text>
+                <TextInput
+                    secureTextEntry={true}
+                    placeholder='Enter password'
+                    style={styles.inputBox}
+                    value={password}
+                    onChangeText={setPassword}
+                />
+            </View>
 
-      <Text style={styles.appName}>Seva Setu</Text>
+            <TouchableOpacity onPress={()=> navigation.navigate('ForgotPassword')}>
+                <Text style={styles.forgotPass}>Forgot Password?</Text>
+            </TouchableOpacity>
 
-      <View style={styles.container}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          placeholder="Enter email"
-          style={styles.inputBox}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-      </View>
+            <TouchableOpacity onPress={handleLogin} style={styles.loginBtn}>
+                <Text style={styles.btnText}>Login</Text>
+            </TouchableOpacity>
 
-      <View style={styles.container}>
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          secureTextEntry
-          placeholder="Enter password"
-          style={styles.inputBox}
-          value={password}
-          onChangeText={setPassword}
-        />
-      </View>
-
-      <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-        <Text style={styles.forgotPass}>Forgot Password?</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={handleLogin} style={styles.loginBtn}>
-        <Text style={styles.btnText}>Login</Text>
-      </TouchableOpacity>
-
-      <View style={styles.Footer}>
-        <Text style={styles.FooterTxt}>Don't have an account?</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-          <Text style={styles.signupTxt}>Sign Up</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
+            <View style={styles.Footer}>
+                <Text style={styles.FooterTxt}>Don't have an account?</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+                    <Text style={styles.signupTxt}>Sign Up</Text>
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
+    );
 };
 
 export default Login;
-
 
 const styles = StyleSheet.create({
     // Your existing styles...
