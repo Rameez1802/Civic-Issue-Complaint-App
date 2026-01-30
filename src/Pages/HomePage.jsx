@@ -1,42 +1,58 @@
-import { Pressable, StyleSheet, Text, View, Image, TouchableOpacity, ScrollView } from 'react-native';
-import React, { useState, useCallback } from 'react'; // Import hooks
-import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import FeatherIcon from 'react-native-vector-icons/Feather';
-import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Define your server URL
-const SERVER_BASE = 'https://civic-issue-complaint-app.onrender.com/'
+import { API } from '../config/api'; // ✅ CENTRAL API
 
 const HomePage = ({ navigation }) => {
-  // State to hold the report counts, initialized to 0
-  const [counts, setCounts] = useState({ total: 0, pending: 0, resolved: 0 });
+  const [counts, setCounts] = useState({
+    total: 0,
+    pending: 0,
+    resolved: 0,
+  });
 
-  // Function to fetch the counts from our new '/stats' endpoint
   const fetchReportCounts = async () => {
     try {
-      // Get the stored user info
       const userInfoString = await AsyncStorage.getItem('userInfo');
-      if (userInfoString) {
-        const userInfo = JSON.parse(userInfoString);
-        const token = userInfo.token;
 
-        // Make the fetch request with the Authorization header
-        const response = await fetch(`${SERVER_BASE}/api/reports/stats`, {
-          headers: {
-            'Authorization': `Bearer ${token}`, // <-- Send the token
-          },
-        });
-        const data = await response.json();
+      if (!userInfoString) {
+        Alert.alert('Session expired', 'Please login again');
+        navigation.replace('Login');
+        return;
+      }
+
+      const userInfo = JSON.parse(userInfoString);
+      const token = userInfo.token;
+
+      const response = await fetch(API.REPORT_STATS, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
         setCounts(data);
+      } else {
+        console.log('Stats error:', data);
       }
     } catch (error) {
-      console.error("Failed to fetch report counts:", error);
+      console.error('Failed to fetch report counts:', error);
     }
   };
 
-  // Hook to automatically refresh data every time the screen is focused
+  // Refresh stats whenever screen comes into focus
   useFocusEffect(
     useCallback(() => {
       fetchReportCounts();
@@ -46,20 +62,30 @@ const HomePage = ({ navigation }) => {
   return (
     <ScrollView>
       <View>
-        <Image style={styles.appLogo} source={require('../images/appLogo.png')} />
+        <Image
+          style={styles.appLogo}
+          source={require('../images/appLogo.png')}
+        />
         <Text style={styles.heading}>Seva Setu</Text>
-        <Text style={styles.subHeading}>Make your city better, one report at a time</Text>
+        <Text style={styles.subHeading}>
+          Make your city better, one report at a time
+        </Text>
       </View>
-      <TouchableOpacity style={styles.complainbtn} onPress={() => navigation.navigate("ReportIssue")}>
+
+      <TouchableOpacity
+        style={styles.complainbtn}
+        onPress={() => navigation.navigate('ReportIssue')}
+      >
         <View style={styles.btnContent}>
           <EntypoIcon name="plus" size={55} color="white" />
           <Text style={styles.btnText}>Report Issue</Text>
         </View>
       </TouchableOpacity>
+
       <View>
         <Text style={styles.yourReportsText}>Your Reports</Text>
-        
-        {/* Total Reports Card - Now uses state */}
+
+        {/* TOTAL */}
         <View style={styles.card}>
           <View style={styles.firstline}>
             <Text style={styles.cardtext}>{counts.total}</Text>
@@ -68,7 +94,7 @@ const HomePage = ({ navigation }) => {
           <Text style={styles.cardtext}>Total Reports</Text>
         </View>
 
-        {/* Pending Reports Card - Now uses state */}
+        {/* PENDING */}
         <View style={styles.card}>
           <View style={styles.firstline}>
             <Text style={styles.cardtext}>{counts.pending}</Text>
@@ -77,7 +103,7 @@ const HomePage = ({ navigation }) => {
           <Text style={styles.cardtext}>Pending Reports</Text>
         </View>
 
-        {/* Resolved Reports Card - Now uses state */}
+        {/* RESOLVED */}
         <View style={styles.card}>
           <View style={styles.firstline}>
             <Text style={styles.cardtext}>{counts.resolved}</Text>
@@ -91,6 +117,7 @@ const HomePage = ({ navigation }) => {
 };
 
 export default HomePage;
+
 
 // Styles are slightly adjusted for better alignment
 const styles = StyleSheet.create({
